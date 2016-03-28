@@ -27,9 +27,9 @@ package components
 		
 		public function BaseLabel(text:String = "")
 		{
-			_text = text;
 			_textField = new TextField();
 			addChild(_textField);
+			text = text;
 			super();
 		}
 		
@@ -175,6 +175,15 @@ package components
 		public function set selectable(value:Boolean):void {
 			_textField.selectable = value;
 			this.mouseEnabled = value;
+		}
+		
+		/**是否具有边框*/
+		public function get border():Boolean {
+			return _textField.border;
+		}
+		
+		public function set border(value:Boolean):void {
+			_textField.border = value;
 		}
 		
 		/**是否具有背景填充*/
