@@ -33,13 +33,15 @@ package components
 		protected var _spaceX:int = 0;
 		protected var _spaceY:int = 0;
 		protected var _selectedIndex:int = -1;
-		protected var _mouseHandler:Handler;
 		protected var _selectHandler:Handler;
+		protected var _mouseHandler:Handler;
 		protected var _renderHandler:Handler;
 		protected var _isVerticalLayout:Boolean;
 		protected var _selectEnable:Boolean;
 		protected var _cellSize:Number;
 		protected var _array:Array;
+		protected var _page:int = 0;
+		protected var _totalPage:int = 0;
 		
 		public function BaseList()
 		{
@@ -309,6 +311,7 @@ package components
 			}
 		}
 		
+		/**单元格集合*/
 		public function get cells():Vector.<BaseSprite>
 		{
 			return _cells;
@@ -325,6 +328,7 @@ package components
 			_selectEnable = value;
 		}
 
+		/**单元格鼠标事件处理器(默认返回参数e:MouseEvent,index:int)*/
 		public function get mouseHandler():Handler
 		{
 			return _mouseHandler;
@@ -359,6 +363,7 @@ package components
 			changeCells();
 		}
 
+		/**选择被改变时执行的处理器(默认返回参数index:int)*/
 		public function get selectHandler():Handler
 		{
 			return _selectHandler;
@@ -394,12 +399,25 @@ package components
 			}
 		}
 		
-		public function selectedItem():Object{
+		/**选中单元格数据源*/
+		public function get selectedItem():Object{
 			return _selectedIndex != -1? _array[_selectedIndex] : null;	
 		}
 		
+		public function set selectedItem(value:Object):void{
+			selectedIndex = _array.indexOf(value);
+		}
 		
-
+		/**选择单元格组件*/
+		public function get selection():BaseSprite{
+			return getCell(_selectedIndex);
+		}
+		
+		public function set selection(value:BaseSprite):void{
+			selectedIndex = _startIndex + _cells.indexOf(value)
+		}
+		
+		/**单元格渲染处理器(默认返回参数cell:Box,index:int)*/
 		public function get renderHandler():Handler
 		{
 			return _renderHandler;
@@ -410,6 +428,7 @@ package components
 			_renderHandler = value;
 		}
 
+		/**列表数据源*/
 		public function get array():Array
 		{
 			return _array;
@@ -417,7 +436,60 @@ package components
 
 		public function set array(value:Array):void
 		{
-			_array = value;
+			changeCells();
+			_array = value || [];
+			var length:int = _array.length;
+			_totalPage = Math.ceil(length / (repeatX * repeatY));
+			//重设selectedIndex
+			_selectedIndex = _selectedIndex < length ? _selectedIndex : length-1;
+			//重设startIndex
+			startIndex = _startIndex;
+			//重设滚动条
+			if(_scrollBar){
+				var numX:int = _isVerticalLayout ? repeatX : repeatY;
+				var numY:int = _isVerticalLayout ? repeatY : repeatX;
+				var lineCount:int = Math.ceil(length / numX);
+				_scrollBar.visible = _totalPage > 1;
+				if(_scrollBar.visible){
+					_scrollBar.scrollSize = _cellSize;
+					_scrollBar.thumbPercent = numY / lineCount;
+					_scrollBar.setScroll(0,(lineCount - numY) * _cellSize + (_isVerticalLayout? height : width)%_cellSize,_startIndex / numX*_cellSize);
+				}else{
+					_scrollBar.setScroll(0,0,0);
+				}
+			}
+		}
+		
+		/**列表数据总数*/
+		public function get length():int{
+				return _array.length;
+		}
+
+		/**当前页码*/
+		public function get page():int
+		{
+			return _page;
+		}
+
+		public function set page(value:int):void
+		{
+			_page = value;
+			if(_array){
+				_page = value >0?value : 0;
+				_page = _page < totalPage? _page : _totalPage-1;
+				startIndex = _page * repeatX * repeatY;
+			}
+		}
+
+		/**最大分页数*/
+		public function get totalPage():int
+		{
+			return _totalPage;
+		}
+
+		public function set totalPage(value:int):void
+		{
+			_totalPage = value;
 		}
 
 		
