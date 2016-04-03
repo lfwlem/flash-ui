@@ -1,9 +1,14 @@
 package components
 {
+	import flash.display.DisplayObject;
 	import flash.display.Graphics;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Rectangle;
+	import flash.text.ReturnKeyLabel;
+	
+	import components.scrollBar.HScrollBar;
+	import components.scrollBar.VScrollBar;
 	
 	import configs.Direction;
 	
@@ -104,6 +109,11 @@ package components
 				_scrollBar = value;
 				if(!this.contains(_scrollBar)){
 					addChild(_scrollBar);
+				}
+				if(value as VScrollBar){
+					_scrollBar.x = width-_scrollBar.width;
+				}else if(value as HScrollBar){
+					_scrollBar.y = height - scrollBar.height;
 				}
 				_scrollBar.target = this;
 				_scrollBar.addEventListener(Event.CHANGE,onScrollBarChange);
@@ -464,6 +474,11 @@ package components
 		public function get length():int{
 				return _array.length;
 		}
+		
+		/**刷新列表*/
+		public function refresh():void{
+			array = _array;
+		}
 
 		/**当前页码*/
 		public function get page():int
@@ -492,6 +507,121 @@ package components
 			_totalPage = value;
 		}
 
+		/**获取单元格数据源*/
+		public function getItem(index:int):Object{
+			if(index>-1 && index<_array.length){
+				return _array[index];
+			}
+			return null;
+		}
+		
+		/**修改单元格数据源*/
+		public function changeItem(index:int,source:Object):void{
+			if(index>-1 && index<_array.length){
+				_array[index] = source;
+				//如果是可视范围，则重新渲染
+				if(index>=_startIndex && index < _startIndex + _cells.length){
+					renderItem(getCell(index),index);
+				}
+			}
+		}
+		
+		/**添加单元格数据源*/
+		public function addItem(source:Object):void{
+			_array.push(source);
+			array = _array;
+		}
+		
+		/**添加单元格数据源*/
+		public function addItemAt(source:Object,index:int):void{
+			_array.splice(index,0,source);
+			array = _array;
+		}
+		
+		/**删除单元格数据源*/
+		public function deleteItem(index:int):void{
+			_array.splice(index,1);
+			array = _array;
+		}
+		
+		/**获取单元格*/
+		public function getCell(index:int):BaseSprite{
+			changeCells();
+			if(index>-1 && _cells){
+				return _cells[(index-_startIndex) % _cells.length];
+			}
+			return null;
+		}
+		
+		/**滚动到某个索引位置*/
+		public function scrollTo(index:int):void{
+			startIndex = index;
+			if(_scrollBar){
+				var numX:int = _isVerticalLayout ? repeatX : repeatY;
+				_scrollBar.value = (index / numX) * _cellSize;
+			}
+		}
+		
+		/**获取list内拖动结束位置的索引*/
+		public function getDropIndex(e:DragEvent):int{
+			var target:DisplayObject = e.data.dropTarget;
+			for(var i:int=0,n:int=_cells.length;i<n;i++){
+				if(_cells[i].contains(target)){
+					return _startIndex + i;
+				}
+			}
+			return -1;
+		}
+		
+		override public function removeChild(child:DisplayObject):DisplayObject
+		{
+			return child != _content ? super.removeChild(child) : null;
+		}
+		
+		override public function removeChildAt(index:int):DisplayObject
+		{
+			return getChildAt(index) !=  _content?  super.removeChildAt(index) : null;
+		}
+		
+		override public function set width(value:Number):void
+		{
+			super.width = value;
+			changeCells();
+		}
+		
+		override public function set height(value:Number):void
+		{
+			super.height = value;
+			changeCells();
+		}
+		
+		override public function setSize(width:Number, height:Number):void
+		{
+			super.setSize(width, height);
+			changeCells();
+		}
+		
+		override public function destory():void
+		{
+			super.destory();
+			if(_content){
+				removeChild(_content);
+				_content.destory();
+				_content = null;
+			}
+			if(_scrollBar){
+				removeChild(_scrollBar);
+				_scrollBar.destory();
+				_scrollBar = null;
+			}
+			_itemRender = null;
+			_cells = null;
+			_array = null;
+			_selectHandler = null;
+			_mouseHandler = null;
+			_renderHandler = null;
+			
+		}
 		
 	}
 }
