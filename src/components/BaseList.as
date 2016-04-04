@@ -5,13 +5,13 @@ package components
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Rectangle;
-	import flash.text.ReturnKeyLabel;
 	
 	import components.scrollBar.HScrollBar;
 	import components.scrollBar.VScrollBar;
 	
 	import configs.Direction;
 	
+	import events.DragEvent;
 	import events.UIEvent;
 	
 	import handlers.Handler;
@@ -48,8 +48,9 @@ package components
 		protected var _page:int = 0;
 		protected var _totalPage:int = 0;
 		
-		public function BaseList()
+		public function BaseList(item:*=null)
 		{
+			itemRender = item;
 			super();
 		}
 		
@@ -73,7 +74,7 @@ package components
 		
 		public function set itemRender(value:*):void
 		{
-			_itemRender = value;
+			_itemRender = value? value : new BaseItem();
 			changeCells();
 		}
 		
